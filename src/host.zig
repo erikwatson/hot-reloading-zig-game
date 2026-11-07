@@ -36,6 +36,10 @@ const Game = struct {
     }
 };
 
+fn gameLibraryModified() c_long {
+    return ray.GetFileModTime(@ptrCast(build_options.game_library_path.ptr));
+}
+
 pub fn main() void {
     ray.InitWindow(1280, 720, "Arena");
     defer ray.CloseWindow();
@@ -51,18 +55,47 @@ pub fn main() void {
 
     var editor_enabled = true;
 
+    var last_modified = gameLibraryModified();
+    var pending_reload = false;
+    var pending_modified = last_modified;
+    var reload_timer: f32 = 0;
+
     while (!ray.WindowShouldClose()) {
+        const delta_time = ray.GetFrameTime();
+        const modified = gameLibraryModified();
+
+        // Detect a changed game library.
+        if (modified != last_modified) {
+            last_modified = modified;
+            pending_modified = modified;
+            pending_reload = true;
+            reload_timer = 0;
+        }
+
+        // Wait until the file timestamp is stable for 300 ms.
+        if (pending_reload) {
+            if (modified != pending_modified) {
+                pending_modified = modified;
+                reload_timer = 0;
+            } else {
+                reload_timer += delta_time;
+            }
+
+            if (reload_timer >= 0.3) {
+                game.unload();
+                game = Game.load();
+                game.init();
+
+                pending_reload = false;
+                std.debug.print("Game reloaded\n", .{});
+            }
+        }
+
         if (ray.IsKeyPressed(ray.KEY_E)) {
             editor_enabled = !editor_enabled;
         }
 
-        if (ray.IsKeyPressed(ray.KEY_R)) {
-            game.unload();
-            game = Game.load();
-            game.init();
-        }
-
-        game.update(ray.GetFrameTime());
+        game.update(delta_time);
 
         ray.BeginDrawing();
         ray.ClearBackground(ray.RAYWHITE);
