@@ -12,7 +12,8 @@ export fn game_update(delta_time: f32) void {
 
 export fn game_draw() void {
     // Draw the game world
-    ray.DrawText("Game version 1", 20, 20, 30, ray.BLUE);
+    ray.DrawText("Game version 1", 20, 20, 30, ray.RED);
+    ray.DrawText("Game version 2", 20, 40, 30, ray.ORANGE);
 }
 
 export fn game_shutdown() void {
