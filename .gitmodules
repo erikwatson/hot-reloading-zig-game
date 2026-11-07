@@ -1,0 +1,8 @@
+[submodule "vendor/imgui"]
+	path = vendor/imgui
+	url = https://github.com/ocornut/imgui.git
+	branch = docking
+[submodule "vendor/rlImGui"]
+	path = vendor/rlImGui
+	url = https://github.com/raylib-extras/rlImGui.git
+	branch = Raylib_5_5
