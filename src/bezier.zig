@@ -44,9 +44,7 @@ pub fn curveToLineSegments(
     var previousPoint = cubicBezier(curve, 0);
 
     for (0..steps) |i| {
-        const f_steps: f64 = @floatFromInt(steps);
-        const f_i: f64 = @floatFromInt(i);
-        const t = f_i / f_steps;
+        const t = @as(f64, @floatFromInt(i + 1)) / @as(f64, @floatFromInt(steps));
         const currentPoint = cubicBezier(curve, t);
 
         lines[i] = .{

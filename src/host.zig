@@ -1,13 +1,13 @@
-
 const std = @import("std");
 const ray = @import("ray");
 const imgui = @import("imgui");
 const build_options = @import("build_options");
+const game_state = @import("./game_state.zig");
 
-const GameInit = *const fn () callconv(.c) void;
-const GameUpdate = *const fn (f32) callconv(.c) void;
-const GameDraw = *const fn () callconv(.c) void;
-const GameShutdown = *const fn () callconv(.c) void;
+const GameInit = *const fn (*game_state.GameState) callconv(.c) void;
+const GameUpdate = *const fn (*game_state.GameState, f32) callconv(.c) void;
+const GameDraw = *const fn (*game_state.GameState) callconv(.c) void;
+const GameShutdown = *const fn (*game_state.GameState) callconv(.c) void;
 
 const Game = struct {
     library: std.DynLib,
@@ -30,8 +30,8 @@ const Game = struct {
         };
     }
 
-    fn unload(self: *Game) void {
-        self.shutdown();
+    fn unload(self: *Game, state: *game_state.GameState) void {
+        self.shutdown(state);
         self.library.close();
     }
 };
@@ -49,9 +49,12 @@ pub fn main() void {
 
     ray.SetTargetFPS(60);
 
+    var state = game_state.GameState.init();
+    defer state.deinit();
+
     var game = Game.load();
-    game.init();
-    defer game.unload();
+    game.init(&state);
+    defer game.unload(&state);
 
     var editor_enabled = true;
 
@@ -82,9 +85,9 @@ pub fn main() void {
             }
 
             if (reload_timer >= 0.3) {
-                game.unload();
+                game.unload(&state);
                 game = Game.load();
-                game.init();
+                game.init(&state);
 
                 pending_reload = false;
                 std.debug.print("Game reloaded\n", .{});
@@ -95,12 +98,12 @@ pub fn main() void {
             editor_enabled = !editor_enabled;
         }
 
-        game.update(delta_time);
+        game.update(&state, delta_time);
 
         ray.BeginDrawing();
         ray.ClearBackground(ray.RAYWHITE);
 
-        game.draw();
+        game.draw(&state);
 
         if (editor_enabled) {
             imgui.imgui_begin();
@@ -111,4 +114,3 @@ pub fn main() void {
         ray.EndDrawing();
     }
 }
-
