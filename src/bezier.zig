@@ -34,26 +34,49 @@ fn cubicBezier(curve: types.Curve, position: f64) types.Point {
 }
 
 pub fn curveToLineSegments(
-    allocator: std.mem.Allocator,
+    lines: []types.Line,
     curve: types.Curve,
-    steps: usize,
-) ![]types.Line {
-    const lines = try allocator.alloc(types.Line, steps);
+) void {
+    const steps = lines.len;
 
-    // Populate lines with each line segment
     var previousPoint = cubicBezier(curve, 0);
 
-    for (0..steps) |i| {
-        const t = @as(f64, @floatFromInt(i + 1)) / @as(f64, @floatFromInt(steps));
+    for (lines, 0..) |*line, i| {
+        const t: f64 = @as(f64, @floatFromInt(i + 1)) /
+            @as(f64, @floatFromInt(steps));
+
         const currentPoint = cubicBezier(curve, t);
 
-        lines[i] = .{
+        line.* = .{
             .start = previousPoint,
             .end = currentPoint,
         };
 
         previousPoint = currentPoint;
     }
-
-    return lines;
 }
+
+// pub fn curveToLineSegments(
+//     allocator: std.mem.Allocator,
+//     curve: types.Curve,
+//     steps: usize,
+// ) ![]types.Line {
+//     const lines = try allocator.alloc(types.Line, steps);
+//
+//     // Populate lines with each line segment
+//     var previousPoint = cubicBezier(curve, 0);
+//
+//     for (0..steps) |i| {
+//         const t = @as(f64, @floatFromInt(i + 1)) / @as(f64, @floatFromInt(steps));
+//         const currentPoint = cubicBezier(curve, t);
+//
+//         lines[i] = .{
+//             .start = previousPoint,
+//             .end = currentPoint,
+//         };
+//
+//         previousPoint = currentPoint;
+//     }
+//
+//     return lines;
+// }

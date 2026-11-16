@@ -16,36 +16,56 @@ fn isMouseOverPoint(point: types.Point, mouse: ray.Vector2) bool {
 export fn game_init(state: *game_state.GameState) callconv(.c) void {
     // Initialise game state
     if (state.line_segments.len == 0) {
-        state.line_segments = bezier.curveToLineSegments(
-            state.persistent_arena.allocator(),
-            state.curve,
+        state.line_segments = state.persistent_arena.allocator().alloc(
+            types.Line,
             LINE_SEGMENTS_PER_LINE,
-        ) catch unreachable;
+        ) catch @panic("Failed to allocate line segments");
     }
+
+    bezier.curveToLineSegments(state.line_segments, state.curve);
 }
 
 export fn game_update(state: *game_state.GameState, delta_time: f32) callconv(.c) void {
     _ = delta_time;
-    // Update game logic
-    const mouse = ray.GetMousePosition();
 
-    const lineSegments = &state.line_segments;
+    const mouse = ray.GetMousePosition();
     const curve = &state.curve;
-    const persistent_arena = &state.persistent_arena;
 
     if (ray.IsMouseButtonDown(ray.MOUSE_BUTTON_LEFT)) {
         if (isMouseOverPoint(curve.start, mouse)) {
             curve.start.x = mouse.x;
             curve.start.y = mouse.y;
 
-            lineSegments.* = bezier.curveToLineSegments(
-                persistent_arena.allocator(),
+            bezier.curveToLineSegments(
+                state.line_segments,
                 curve.*,
-                LINE_SEGMENTS_PER_LINE,
-            ) catch unreachable;
+            );
         }
     }
 }
+
+// export fn game_update(state: *game_state.GameState, delta_time: f32) callconv(.c) void {
+//     _ = delta_time;
+//     // Update game logic
+//     const mouse = ray.GetMousePosition();
+//
+//     const lineSegments = &state.line_segments;
+//     const curve = &state.curve;
+//     const persistent_arena = &state.persistent_arena;
+//
+//     if (ray.IsMouseButtonDown(ray.MOUSE_BUTTON_LEFT)) {
+//         if (isMouseOverPoint(curve.start, mouse)) {
+//             curve.start.x = mouse.x;
+//             curve.start.y = mouse.y;
+//
+//             lineSegments.* = bezier.curveToLineSegments(
+//                 persistent_arena.allocator(),
+//                 curve.*,
+//                 LINE_SEGMENTS_PER_LINE,
+//             ) catch unreachable;
+//         }
+//     }
+// }
 
 export fn game_draw(state: *game_state.GameState) callconv(.c) void {
     const lineSegments = &state.line_segments;
